@@ -9,9 +9,6 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import com.google.gson.Gson;
-import hoang_yen_cuisine.basic.Dish;
-import hoang_yen_cuisine.basic.NotificationProcessor;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -20,7 +17,11 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 
+import com.google.gson.Gson;
+
+import hoang_yen_cuisine.basic.Dish;
 import hoang_yen_cuisine.basic.MotherOfRepositories;
+import hoang_yen_cuisine.notification.NotificationProcessor;
 
 @SuppressWarnings("deprecation")
 public class App {
@@ -115,8 +116,7 @@ public class App {
 				MotherOfRepositories.OTHER_USERS.add(MotherOfRepositories.CURRENT_USER);
 				if(!MotherOfRepositories.MENU.isEmpty()) {
 					NotificationProcessor notificationProcessor = new NotificationProcessor();
-
-					notificationProcessor.sendEmail(new HashSet(){{ add(MotherOfRepositories.CURRENT_USER);}});
+					notificationProcessor.sendNotification(new HashSet(){{ add(MotherOfRepositories.CURRENT_USER);}});
 				}
 			}
 		}
@@ -148,7 +148,7 @@ public class App {
 
 			NotificationProcessor notificationProcessor = new NotificationProcessor();
 
-			notificationProcessor.sendEmail(MotherOfRepositories.OTHER_USERS);
+			notificationProcessor.sendNotification(MotherOfRepositories.OTHER_USERS);
 		}
 
 		if (cl.hasOption("menu")) {

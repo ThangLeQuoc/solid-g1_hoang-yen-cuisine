@@ -1,9 +1,12 @@
-package hoang_yen_cuisine.basic;
+
+package hoang_yen_cuisine.notification;
 
 import java.util.Arrays;
 import java.util.Set;
 
-public class NotificationProcessor {
+import hoang_yen_cuisine.basic.MotherOfRepositories;
+
+public class EmailChannel {
 	public void sendEmail(Set<String> users) {
 		if (users == null || users.isEmpty()) {
 			return;
