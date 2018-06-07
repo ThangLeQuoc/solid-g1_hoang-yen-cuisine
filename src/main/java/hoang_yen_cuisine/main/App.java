@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Random;
+import java.util.Scanner;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -22,6 +24,8 @@ import com.google.gson.Gson;
 import hoang_yen_cuisine.basic.Dish;
 import hoang_yen_cuisine.basic.MotherOfRepositories;
 import hoang_yen_cuisine.notification.NotificationProcessor;
+import hoang_yen_cuisine.payment.PaymentByCard;
+import hoang_yen_cuisine.payment.PaymentByCash;
 
 @SuppressWarnings("deprecation")
 public class App {
@@ -163,8 +167,57 @@ public class App {
 		}
 
 		if (cl.hasOption("pay")) {
-			// TODO (vhphuc May 31, 2018):
-			System.out.println("Payment service is under construction");
+			Scanner reader = new Scanner(System.in);
+			
+			Random random = new Random();
+			int price = 0;
+			while (price <= 0) {
+				price = random.nextInt();
+			}
+			System.out.println("Your bill is: "+ price +"k VND\n");
+			
+			boolean paymentSuccess = false;
+			int trytime = 0;
+			while (!paymentSuccess && (trytime<3)) {
+				System.out.println("You have two payment method: \t 1. Card \t 2. Cash \n Which one you choose? \n");
+				int paymentMethod = reader.nextInt();
+				
+				switch (paymentMethod) {
+				case 1:
+					PaymentByCard paymentByCard = new PaymentByCard();
+					boolean validateCard = paymentByCard.validateCardInfo();
+					boolean validateAddress = paymentByCard.validateAddress();
+					paymentSuccess = paymentByCard.paySuccess(validateCard, validateAddress);
+					if (paymentSuccess) {
+						System.out.println("SUCCESS");
+					}
+					else {
+						System.out.println("DO NOT SUCCESS");
+						trytime++;
+					}
+					break;
+				case 2:
+					PaymentByCash paymentByCash = new PaymentByCash();
+					boolean validateCard_Cash = paymentByCash.validateCardInfo();
+					boolean validateAddress_Cash = paymentByCash.validateAddress();
+					paymentSuccess = paymentByCash.paySuccess(validateCard_Cash, validateAddress_Cash);
+					if (paymentSuccess) {
+						System.out.println("SUCCESS");
+					}
+					else {
+						System.out.println("DO NOT SUCCESS");
+						trytime++;
+					}
+					break;
+				default:
+					System.out.println("DO NOT SUPPORT THIS OPTION");
+					break;
+				}
+				
+				if (trytime == 3) {
+					System.out.println("YOU TRY TOO MANY TIME");
+				}
+			}
 		}
 
 		if (cl.hasOption("poweroverwhelming")) {
