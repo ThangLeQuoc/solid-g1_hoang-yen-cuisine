@@ -6,7 +6,10 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 
+import com.google.gson.Gson;
+import hoang_yen_cuisine.basic.Dish;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -15,7 +18,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 
-import hoang_yen_cuisine.basic.DevModeData;
+import hoang_yen_cuisine.basic.MotherOfRepositories;
 
 @SuppressWarnings("deprecation")
 public class App {
@@ -60,6 +63,7 @@ public class App {
 		Option user = OptionBuilder.withDescription("Sets username").hasArg().withArgName("username").create("user");
 		Option order = OptionBuilder.withDescription("Orders a lunch").hasArg().withArgName("name of dish").create("order");
 		Option pay = OptionBuilder.withDescription("Pays your order within this week").create("pay");
+		Option addDish = OptionBuilder.withDescription("Add new dish for today. Usage: \n\n -addDish [{\"id\":1,\"name\":\"ca\",\"price\":25},{\"id\":1,\"name\":\"dau-hu\",\"price\":25}]").create("addDish");
 		Option menu = OptionBuilder.withDescription("View menu").create("menu");
 		Option godmode = OptionBuilder.withDescription("God mode").create("poweroverwhelming");
 		Option quit = OptionBuilder.withDescription("Burns it down").create("quit");
@@ -68,6 +72,7 @@ public class App {
 		options.addOption(user);
 		options.addOption(order);
 		options.addOption(pay);
+		options.addOption(addDish);
 		options.addOption(menu);
 		options.addOption(godmode);
 		options.addOption(quit);
@@ -94,29 +99,56 @@ public class App {
 		if (cl.hasOption("help")) {
 			printUsage();
 		}
+
 		if (cl.hasOption("user")) {
-			DevModeData.USERNAME = cl.getOptionValue("user");
+			MotherOfRepositories.CURRENT_USER = cl.getOptionValue("user");
+
+			MotherOfRepositories.LOGGEDIN_USERS.add(MotherOfRepositories.CURRENT_USER);
 		}
+
+		if (cl.hasOption("addDish")) {
+			System.out.println("No menu to shown");
+
+			String[] args = cl.getArgs();
+
+			if (args.length != 1) {
+				System.err.println(">> Wrong format. Ex: -addDish [{\"id\":1,\"name\":\"ca\",\"price\":25},{\"id\":1,\"name\":\"dau-hu\",\"price\":25}]");
+			}
+
+			Gson gson = new Gson();
+
+			Dish[] dishes = gson.fromJson(args[0], Dish[].class);
+
+			MotherOfRepositories.MENU = Arrays.asList(dishes);
+
+			// TODO Jun-7-2048/nhattan: notify to all users that menu for today is ready, users could order now.
+		}
+
 		if (cl.hasOption("menu")) {
 			// TODO (vhphuc May 31, 2018): print out the sample menu
 			System.out.println("No menu to shown");
 		}
+
 		if (cl.hasOption("order")) {
 			// TODO (vhphuc May 31, 2018):
 			// Remember to take out command value
 			System.out.println("Order service is under construction");
 		}
+
 		if (cl.hasOption("pay")) {
 			// TODO (vhphuc May 31, 2018):
 			System.out.println("Payment service is under construction");
 		}
+
 		if (cl.hasOption("poweroverwhelming")) {
-			DevModeData.GOD_MODE = true;
+			MotherOfRepositories.GOD_MODE = true;
 			System.out.println("All your base are belong to us");
 		}
+
 		if (cl.hasOption("quit")) {
 			keepRunning = false;
 		}
+
 		return keepRunning;
 	}
 
