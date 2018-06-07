@@ -134,15 +134,17 @@ public class App {
 		if (cl.hasOption("addDish")) {
 			String[] args = cl.getArgs();
 
-			if (args.length != 1) {
-				System.err.println(">> Wrong format. Ex: -addDish [{\"id\":1,\"name\":\"ca\",\"price\":25},{\"id\":1,\"name\":\"dau-hu\",\"price\":25}]");
+			try {
+				Gson gson = new Gson();
+
+				Dish[] dishes = gson.fromJson(args[0], Dish[].class);
+
+				MotherOfRepositories.MENU = Arrays.asList(dishes);
 			}
-
-			Gson gson = new Gson();
-
-			Dish[] dishes = gson.fromJson(args[0], Dish[].class);
-
-			MotherOfRepositories.MENU = Arrays.asList(dishes);
+			catch (Exception e) {
+				System.err.println(">> Wrong format. Ex: -addDish [{\"id\":1,\"name\":\"ca\",\"price\":25},{\"id\":1,\"name\":\"dau-hu\",\"price\":25}]");
+				return true;
+			}
 
 			NotificationProcessor notificationProcessor = new NotificationProcessor();
 
