@@ -7,9 +7,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.HashSet;
 
 import com.google.gson.Gson;
 import hoang_yen_cuisine.basic.Dish;
+import hoang_yen_cuisine.basic.NotificationProcessor;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -67,7 +69,7 @@ public class App {
 		Option menu = OptionBuilder.withDescription("View menu").create("menu");
 		Option godmode = OptionBuilder.withDescription("God mode").create("poweroverwhelming");
 		Option quit = OptionBuilder.withDescription("Burns it down").create("quit");
-		
+
 		options.addOption(help);
 		options.addOption(user);
 		options.addOption(order);
@@ -102,13 +104,34 @@ public class App {
 
 		if (cl.hasOption("user")) {
 			MotherOfRepositories.CURRENT_USER = cl.getOptionValue("user");
+			System.out.println("Welcome " + MotherOfRepositories.CURRENT_USER + "!");
 
-			MotherOfRepositories.LOGGEDIN_USERS.add(MotherOfRepositories.CURRENT_USER);
+			if(MotherOfRepositories.YEN_USER.equalsIgnoreCase(MotherOfRepositories.CURRENT_USER)) {
+				if(MotherOfRepositories.MENU.isEmpty()) {
+					System.out.println("let's add some dishes!");
+				}
+			}
+			else {
+				MotherOfRepositories.OTHER_USERS.add(MotherOfRepositories.CURRENT_USER);
+				if(!MotherOfRepositories.MENU.isEmpty()) {
+					NotificationProcessor notificationProcessor = new NotificationProcessor();
+
+					notificationProcessor.sendEmail(new HashSet(){{ add(MotherOfRepositories.CURRENT_USER);}});
+				}
+			}
+		}
+
+		if (cl.hasOption("quit")) {
+			keepRunning = false;
+		}
+
+		if(MotherOfRepositories.CURRENT_USER == null) {
+			System.err.println("Please set your username first.");
+
+			return keepRunning = true;
 		}
 
 		if (cl.hasOption("addDish")) {
-			System.out.println("No menu to shown");
-
 			String[] args = cl.getArgs();
 
 			if (args.length != 1) {
@@ -121,7 +144,9 @@ public class App {
 
 			MotherOfRepositories.MENU = Arrays.asList(dishes);
 
-			// TODO Jun-7-2048/nhattan: notify to all users that menu for today is ready, users could order now.
+			NotificationProcessor notificationProcessor = new NotificationProcessor();
+
+			notificationProcessor.sendEmail(MotherOfRepositories.OTHER_USERS);
 		}
 
 		if (cl.hasOption("menu")) {
@@ -143,10 +168,6 @@ public class App {
 		if (cl.hasOption("poweroverwhelming")) {
 			MotherOfRepositories.GOD_MODE = true;
 			System.out.println("All your base are belong to us");
-		}
-
-		if (cl.hasOption("quit")) {
-			keepRunning = false;
 		}
 
 		return keepRunning;
