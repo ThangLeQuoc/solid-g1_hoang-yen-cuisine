@@ -1,12 +1,16 @@
 
 package hoang_yen_cuisine.basic;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class MotherOfRepositories {
 	public static final String YEN_USER = "yen";
 
-	public static final Collection<Dish> MENU = new ArrayList<>();
+	public static final List<Dish> MENU = new ArrayList<>();
 
 	public static final Set<String> OTHER_USERS = new HashSet<>();
 	

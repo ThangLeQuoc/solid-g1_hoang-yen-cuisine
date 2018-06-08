@@ -1,6 +1,7 @@
 
 package hoang_yen_cuisine.main;
 
+import static hoang_yen_cuisine.basic.MotherOfRepositories.CURRENT_USER;
 import static hoang_yen_cuisine.basic.MotherOfRepositories.GOD_MODE;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
@@ -39,7 +40,6 @@ public class App {
 		System.out.println(">>>   Welcome to Hoang Yen Cuisine   <<<");
 		printUsage();
 		
-		
 		boolean keepRunning = true;
 			
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
@@ -67,7 +67,7 @@ public class App {
 
 		Option help = OptionBuilder.withDescription("Prints out usage").create("help");
 		Option user = OptionBuilder.withDescription("Sets username").hasArg().withArgName("username").create("user");
-		Option order = OptionBuilder.withDescription("Orders a lunch").hasArg().withArgName("name of dish").create("order");
+		Option order = OptionBuilder.withDescription("Orders a lunch").hasArg().withArgName("ID of dish").create("order");
 		Option pay = OptionBuilder.withDescription("Pays your order within this week").create("pay");
 		Option addDish = OptionBuilder.withDescription("Add new dish for today. Usage: \n\n -addDish [{\"id\":1,\"name\":\"ca\",\"price\":25},{\"id\":1,\"name\":\"dau-hu\",\"price\":25}]").create("addDish");
 		Option menu = OptionBuilder.withDescription("View menu").create("menu");
@@ -109,35 +109,20 @@ public class App {
 		}
 
 		if (cl.hasOption("user")) {
-			MotherOfRepositories.CURRENT_USER = cl.getOptionValue("user");
-			System.out.println("Welcome " + MotherOfRepositories.CURRENT_USER + "!");
-
-			if(MotherOfRepositories.YEN_USER.equalsIgnoreCase(MotherOfRepositories.CURRENT_USER)) {
-				if(MotherOfRepositories.MENU.isEmpty()) {
-					System.out.println("let's add some dishes!");
-				}
-			}
-			else {
-				MotherOfRepositories.OTHER_USERS.add(MotherOfRepositories.CURRENT_USER);
-				if(!MotherOfRepositories.MENU.isEmpty()) {
-
-					notificationProcessor.sendNotification(MotherOfRepositories.CURRENT_USER);
-				}
-			}
+			CURRENT_USER = cl.getOptionValue("user");
+			System.out.println("Welcome " + CURRENT_USER + "!");
 		}
 
 		if (cl.hasOption("quit")) {
 			System.out.println("Have a nice day!");
+			orderProcess.tearDown();
 			keepRunning = false;
 		}
 
-		if(MotherOfRepositories.CURRENT_USER == null) {
-			System.err.println("Please set your username first.");
-
-			return keepRunning = true;
-		}
-
 		if (cl.hasOption("addDish")) {
+			if (!GOD_MODE) {
+				throw new IllegalAccessError("You ain't Yen!!!");
+			}
 			String[] args = cl.getArgs();
 
 			try {
@@ -159,18 +144,14 @@ public class App {
 		}
 
 		if (cl.hasOption("order")) {
-			// TODO (vhphuc May 31, 2018):
-			// Remember to take out command value
 			String rawDishId = cl.getOptionValue("order");
 			try {
 				int dishId = Integer.parseInt(rawDishId);
-//				orderProcess.makeLunchOrder(dish)
+				orderProcess.makeLunchOrder(dishId);
 			}
 			catch (NumberFormatException nfe) {
 				System.err.println("Invalid dishId: " + rawDishId);
 			}
-//			orderProcess.makeLunchOrder(dish)
-			
 		}
 		
 		if (cl.hasOption("pay")) {
@@ -183,7 +164,11 @@ public class App {
 		}
 		
 		if (cl.hasOption("report")) {
-			orderProcess.generateReport();
+			if (!GOD_MODE) {
+				throw new IllegalAccessError("You ain't Yen!!!");
+			}
+			String report = orderProcess.generateReport();
+			System.out.println(report);
 		}
 
 		return keepRunning;

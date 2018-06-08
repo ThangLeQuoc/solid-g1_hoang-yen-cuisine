@@ -10,9 +10,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.Scanner;
 import java.util.Map.Entry;
+import java.util.Scanner;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -33,21 +32,33 @@ public class LunchOrderProcessor {
 
 	// dirty cheap counter ;)
 	private int orderCounter = 0;
+	private Scanner reader = new Scanner(System.in);
 	
 	private Map<String, List<Order>> database = new HashMap<>();
 
 	/**
-	 * Creates a lunch order with a given username and {@link Dish}
+	 * Creates a lunch order with a given dishId for current user
 	 * 
-	 * @param username
-	 * @param dish
+	 * @param dishId
 	 * @return
 	 */
-	public Order makeLunchOrder(Dish dish) {
+	public Order makeLunchOrder(int dishId) {
+		final Dish dish = findDish(dishId);
 		List<Order> orders = database.computeIfAbsent(CURRENT_USER, k -> new ArrayList<>());
 		Order newOrder = new Order(++orderCounter, CURRENT_USER, dish);
 		orders.add(newOrder);
+		System.out.println("You have made an order: " + newOrder);
 		return newOrder;
+	}
+	
+	private Dish findDish(int id) {
+		// for simplicity, use linear search
+		for (Dish d: MENU) {
+			if (d.getId() == id) {
+				return d;
+			}
+		}
+		throw new IllegalStateException("Dish not found with this ID: " + id);
 	}
 
 	/**
@@ -94,7 +105,7 @@ public class LunchOrderProcessor {
 	public boolean pay() {
 		/*
 		 * Algorithm:
-		 *  - views the total amount he needs to pay (use random util)
+		 *  - views the total amount he needs to pay
 		 *  - pick kind of payment, for now, support only these two methods
 		 *    - cash
 		 *    - credit card
@@ -102,61 +113,75 @@ public class LunchOrderProcessor {
 		 *  - ask user to confirm
 		 *  - always return true for cash, for credit card, based on the validation (use random for boolean too)
 		 */
-		try (Scanner reader = new Scanner(System.in)) {
-			Random random = new Random();
-			int price = 0;
-			while (price <= 0) {
-				price = random.nextInt();
+		if (CURRENT_USER == null) {
+			System.err.println("Must log in first by -user option first");
+			return false;
+		}
+		List<Order> myOrders = database.get(CURRENT_USER);
+		StringBuilder sb = new StringBuilder();
+		sb.append("My lunch orders:\n");
+		for (Order order : myOrders) {
+			sb.append("\n\t#").append(order.getId()).append(": ");
+			sb.append(order.getDish().getName());
+			sb.append(" - ").append(order.getDish().getPrice());
+		}
+		int myTotalCost = myOrders.stream().mapToInt(o -> o.getDish().getPrice()).sum();
+		sb.append("\nYour bill is ").append(myTotalCost).append("k VND\n");
+		System.out.println(sb.toString());
+
+		boolean isPaySuccessfully = false;
+		int attempts = 0;
+		while (!isPaySuccessfully && attempts < MAX_PAY_ATTEMPTS) {
+			System.out.println("You have two payment method: \t 1. Card \t 2. Cash \nWhich one you choose? \n");
+			int paymentMethod = reader.nextInt();
+			boolean isCardValidationPassed = false;
+			boolean isAddressValidationPassed = false;
+
+			switch (paymentMethod) {
+			case 1:
+				PaymentByCard paymentByCard = new PaymentByCard();
+				isCardValidationPassed = paymentByCard.validateCardInfo();
+				isAddressValidationPassed = paymentByCard.validateAddress();
+				isPaySuccessfully = paymentByCard.processPayment(isCardValidationPassed, isAddressValidationPassed);
+				if (isPaySuccessfully) {
+					database.remove(CURRENT_USER);
+					System.out.println("SUCCESS");
+					return true;
+				}
+				else {
+					System.out.println("DO NOT SUCCESS");
+					attempts++;
+				}
+				break;
+			case 2:
+				PaymentByCash paymentByCash = new PaymentByCash();
+				isCardValidationPassed = paymentByCash.validateCardInfo();
+				isAddressValidationPassed = paymentByCash.validateAddress();
+				isPaySuccessfully = paymentByCash.processPayment(isCardValidationPassed, isAddressValidationPassed);
+				if (isPaySuccessfully) {
+					database.remove(CURRENT_USER);
+					System.out.println("SUCCESS");
+					return true;
+				}
+				else {
+					System.out.println("DO NOT SUCCESS");
+					attempts++;
+				}
+				break;
+			default:
+				System.out.println("Sorry, no payment method available for this option!");
+				break;
 			}
-			System.out.println("Your bill is: "+ price +"k VND\n");
-			
-			boolean isPaySuccessfully = false;
-			int attempts = 0;
-			while (!isPaySuccessfully && attempts < MAX_PAY_ATTEMPTS) {
-				System.out.println("You have two payment method: \t 1. Card \t 2. Cash \nWhich one you choose? \n");
-				int paymentMethod = reader.nextInt();
-				boolean isCardValidationPassed = false;
-				boolean isAddressValidationPassed = false;
-				
-				switch (paymentMethod) {
-				case 1:
-					PaymentByCard paymentByCard = new PaymentByCard();
-					isCardValidationPassed = paymentByCard.validateCardInfo();
-					isAddressValidationPassed = paymentByCard.validateAddress();
-					isPaySuccessfully = paymentByCard.processPayment(isCardValidationPassed, isAddressValidationPassed);
-					if (isPaySuccessfully) {
-						System.out.println("SUCCESS");
-						return true;
-					}
-					else {
-						System.out.println("DO NOT SUCCESS");
-						attempts++;
-					}
-					break;
-				case 2:
-					PaymentByCash paymentByCash = new PaymentByCash();
-					isCardValidationPassed = paymentByCash.validateCardInfo();
-					isAddressValidationPassed = paymentByCash.validateAddress();
-					isPaySuccessfully = paymentByCash.processPayment(isCardValidationPassed, isAddressValidationPassed);
-					if (isPaySuccessfully) {
-						System.out.println("SUCCESS");
-						return true;
-					}
-					else {
-						System.out.println("DO NOT SUCCESS");
-						attempts++;
-					}
-					break;
-				default:
-					System.out.println("Sorry, no payment method available for this option!");
-					break;
-				}
-				
-				if (attempts == 3) {
-					System.out.println("YOU TRY TOO MANY TIME");
-				}
+
+			if (attempts == 3) {
+				System.out.println("YOU TRY TOO MANY TIME");
 			}
 		}
 		return false;
+	}
+	
+	public void tearDown() {
+		// it's a hack
+		reader.close();
 	}
 }
