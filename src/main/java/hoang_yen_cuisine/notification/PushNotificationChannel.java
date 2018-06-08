@@ -15,7 +15,7 @@ public class PushNotificationChannel {
 		System.out.println("Android notification to users:");
 
 		users.forEach(u -> {
-			System.out.println(u + "!" + " there are dishes for today, you can make an order now.");
+			System.out.println("Hey " + u + "!" + " there are dishes for today, you can make an order now.");
 			System.out.println(Arrays.toString(MotherOfRepositories.MENU.toArray()));
 		});
 	}

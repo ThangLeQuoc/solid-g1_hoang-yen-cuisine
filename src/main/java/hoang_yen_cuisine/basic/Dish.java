@@ -2,15 +2,17 @@
 package hoang_yen_cuisine.basic;
 
 public class Dish {
+	private static int counter = 0;
+	
 	private int id;
 
 	private String name;
 
 	private int price;
 
-	public Dish(int id, String name, int price) {
+	public Dish(String name, int price) {
 		super();
-		this.id = id;
+		this.id = ++counter;
 		this.name = name;
 		this.price = price;
 	}
@@ -29,7 +31,7 @@ public class Dish {
 
 	@Override
 	public String toString() {
-		return "LunchOrder [id=" + id + ", name=" + name + ", price=" + price + "]";
+		return "Dish " + id + ": " +  name + ", price: " + price;
 	}
 
 }

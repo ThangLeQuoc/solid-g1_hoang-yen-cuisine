@@ -29,7 +29,7 @@ public class PaymentByCash implements IPayProcessor{
 	}
 
 	@Override
-	public boolean paySuccess(boolean card, boolean address) {
+	public boolean processPayment(boolean card, boolean address) {
 		if (card && address) {
 			return true;
 		}

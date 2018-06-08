@@ -1,15 +1,13 @@
 
 package hoang_yen_cuisine.main;
 
+import static hoang_yen_cuisine.basic.MotherOfRepositories.GOD_MODE;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Scanner;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -22,10 +20,9 @@ import org.apache.commons.cli.Options;
 import com.google.gson.Gson;
 
 import hoang_yen_cuisine.basic.Dish;
+import hoang_yen_cuisine.basic.LunchOrderProcessor;
 import hoang_yen_cuisine.basic.MotherOfRepositories;
 import hoang_yen_cuisine.notification.NotificationProcessor;
-import hoang_yen_cuisine.payment.PaymentByCard;
-import hoang_yen_cuisine.payment.PaymentByCash;
 
 @SuppressWarnings("deprecation")
 public class App {
@@ -34,6 +31,9 @@ public class App {
 	private static final CommandLineParser PARSER = new DefaultParser();
 	
 	private static final Options OPTIONS = constructOptions();
+	
+	private static LunchOrderProcessor orderProcess = LunchOrderProcessor.getInstance();
+	private static NotificationProcessor notificationProcessor = NotificationProcessor.getInstance();
 
 	public static void main(String[] args) {
 		System.out.println(">>>   Welcome to Hoang Yen Cuisine   <<<");
@@ -57,7 +57,6 @@ public class App {
 		}
 		catch (IOException ioe) {
 			System.err.println("Caught exception during read user input: " + ioe);
-			ioe.printStackTrace();
 		}
 		
 	}
@@ -72,6 +71,7 @@ public class App {
 		Option pay = OptionBuilder.withDescription("Pays your order within this week").create("pay");
 		Option addDish = OptionBuilder.withDescription("Add new dish for today. Usage: \n\n -addDish [{\"id\":1,\"name\":\"ca\",\"price\":25},{\"id\":1,\"name\":\"dau-hu\",\"price\":25}]").create("addDish");
 		Option menu = OptionBuilder.withDescription("View menu").create("menu");
+		Option report = OptionBuilder.withDescription("Generate reports").create("report");
 		Option godmode = OptionBuilder.withDescription("God mode").create("poweroverwhelming");
 		Option quit = OptionBuilder.withDescription("Burns it down").create("quit");
 
@@ -81,6 +81,7 @@ public class App {
 		options.addOption(pay);
 		options.addOption(addDish);
 		options.addOption(menu);
+		options.addOption(report);
 		options.addOption(godmode);
 		options.addOption(quit);
 
@@ -119,13 +120,14 @@ public class App {
 			else {
 				MotherOfRepositories.OTHER_USERS.add(MotherOfRepositories.CURRENT_USER);
 				if(!MotherOfRepositories.MENU.isEmpty()) {
-					NotificationProcessor notificationProcessor = new NotificationProcessor();
-					notificationProcessor.sendNotification(new HashSet(){{ add(MotherOfRepositories.CURRENT_USER);}});
+
+					notificationProcessor.sendNotification(MotherOfRepositories.CURRENT_USER);
 				}
 			}
 		}
 
 		if (cl.hasOption("quit")) {
+			System.out.println("Have a nice day!");
 			keepRunning = false;
 		}
 
@@ -143,86 +145,45 @@ public class App {
 
 				Dish[] dishes = gson.fromJson(args[0], Dish[].class);
 
-				MotherOfRepositories.MENU = Arrays.asList(dishes);
+				MotherOfRepositories.MENU.addAll(Arrays.asList(dishes));
 			}
 			catch (Exception e) {
-				System.err.println(">> Wrong format. Ex: -addDish [{\"id\":1,\"name\":\"ca\",\"price\":25},{\"id\":1,\"name\":\"dau-hu\",\"price\":25}]");
+				System.err.println(">> Wrong format. Ex: -addDish [{\"name\":\"fried-fish\",\"price\":25},{\"name\":\"tofu\",\"price\":25}]");
 				return true;
 			}
-
-			NotificationProcessor notificationProcessor = new NotificationProcessor();
-
 			notificationProcessor.sendNotification(MotherOfRepositories.OTHER_USERS);
 		}
 
 		if (cl.hasOption("menu")) {
-			// TODO (vhphuc May 31, 2018): print out the sample menu
-			System.out.println("No menu to shown");
+			orderProcess.viewMenu();
 		}
 
 		if (cl.hasOption("order")) {
 			// TODO (vhphuc May 31, 2018):
 			// Remember to take out command value
-			System.out.println("Order service is under construction");
+			String rawDishId = cl.getOptionValue("order");
+			try {
+				int dishId = Integer.parseInt(rawDishId);
+//				orderProcess.makeLunchOrder(dish)
+			}
+			catch (NumberFormatException nfe) {
+				System.err.println("Invalid dishId: " + rawDishId);
+			}
+//			orderProcess.makeLunchOrder(dish)
+			
 		}
-
+		
 		if (cl.hasOption("pay")) {
-			Scanner reader = new Scanner(System.in);
-			
-			Random random = new Random();
-			int price = 0;
-			while (price <= 0) {
-				price = random.nextInt();
-			}
-			System.out.println("Your bill is: "+ price +"k VND\n");
-			
-			boolean paymentSuccess = false;
-			int trytime = 0;
-			while (!paymentSuccess && (trytime<3)) {
-				System.out.println("You have two payment method: \t 1. Card \t 2. Cash \n Which one you choose? \n");
-				int paymentMethod = reader.nextInt();
-				
-				switch (paymentMethod) {
-				case 1:
-					PaymentByCard paymentByCard = new PaymentByCard();
-					boolean validateCard = paymentByCard.validateCardInfo();
-					boolean validateAddress = paymentByCard.validateAddress();
-					paymentSuccess = paymentByCard.paySuccess(validateCard, validateAddress);
-					if (paymentSuccess) {
-						System.out.println("SUCCESS");
-					}
-					else {
-						System.out.println("DO NOT SUCCESS");
-						trytime++;
-					}
-					break;
-				case 2:
-					PaymentByCash paymentByCash = new PaymentByCash();
-					boolean validateCard_Cash = paymentByCash.validateCardInfo();
-					boolean validateAddress_Cash = paymentByCash.validateAddress();
-					paymentSuccess = paymentByCash.paySuccess(validateCard_Cash, validateAddress_Cash);
-					if (paymentSuccess) {
-						System.out.println("SUCCESS");
-					}
-					else {
-						System.out.println("DO NOT SUCCESS");
-						trytime++;
-					}
-					break;
-				default:
-					System.out.println("DO NOT SUPPORT THIS OPTION");
-					break;
-				}
-				
-				if (trytime == 3) {
-					System.out.println("YOU TRY TOO MANY TIME");
-				}
-			}
+			orderProcess.pay();
 		}
 
 		if (cl.hasOption("poweroverwhelming")) {
-			MotherOfRepositories.GOD_MODE = true;
+			GOD_MODE = true;
 			System.out.println("All your base are belong to us");
+		}
+		
+		if (cl.hasOption("report")) {
+			orderProcess.generateReport();
 		}
 
 		return keepRunning;
