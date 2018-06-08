@@ -1,48 +1,88 @@
 
 package hoang_yen_cuisine.basic;
 
+import static hoang_yen_cuisine.basic.MotherOfRepositories.CURRENT_USER;
+import static hoang_yen_cuisine.basic.MotherOfRepositories.GOD_MODE;
+import static hoang_yen_cuisine.basic.MotherOfRepositories.MENU;
+
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Scanner;
+
+import org.apache.commons.lang3.StringUtils;
+
+import hoang_yen_cuisine.payment.PaymentByCard;
+import hoang_yen_cuisine.payment.PaymentByCash;
 
 public class LunchOrderProcessor {
+	
+	private static final LunchOrderProcessor INSTANCE = new LunchOrderProcessor();
 
-	// TODO (vhphuc May 31, 2018): implement memory storage here: a list or whatever
+	private static final int MAX_PAY_ATTEMPTS = 3;
+	
+	public static LunchOrderProcessor getInstance() {
+		return INSTANCE;
+	}
+	
+	private LunchOrderProcessor() {}
+
+	private Scanner reader = new Scanner(System.in);
+	
+	private Map<String, List<Order>> database = new HashMap<>();
 
 	/**
-	 * Creates a lunch order with a given username and {@link Dish}
+	 * Creates a lunch order with a given dishId for current user
 	 * 
-	 * @param username
-	 * @param dish
+	 * @param dishId
 	 * @return
 	 */
-	public Order makeLunchOrder(String username, Dish dish) {
-		// TODO (vhphuc May 31, 2018):
-		// store its to memory storage
-		throw new UnsupportedOperationException();
+	public Order makeLunchOrder(int dishId) {
+		final Dish dish = findDish(dishId);
+		List<Order> orders = database.computeIfAbsent(CURRENT_USER, k -> new ArrayList<>());
+		Order newOrder = new Order(CURRENT_USER, dish);
+		orders.add(newOrder);
+		System.out.println("You have made an order: " + newOrder);
+		return newOrder;
 	}
-
-	/**
-	 * Updates a lunch order by replacing dish
-	 * 
-	 * @param orderId
-	 * @param dish
-	 */
-	public void updateLunchOrder(int orderId, Dish dish) {
-		// TODO (vhphuc May 31, 2018):
-		throw new UnsupportedOperationException();
+	
+	private Dish findDish(int id) {
+		// for simplicity, use linear search
+		for (Dish d: MENU) {
+			if (d.getId() == id) {
+				return d;
+			}
+		}
+		throw new IllegalStateException("Dish not found with this ID: " + id);
 	}
 
 	/**
 	 * Generates reports about order placed within a week for Yen
 	 * 
-	 * @param orders
 	 * @return a collection of reports
 	 *         <br>
 	 *         <b>Note</b>: <em> for simple version, format of report is just a
 	 *         string whose contents is total expense of each person</em>
 	 */
-	public String generateReport(Collection<Order> orders) {
-		// TODO (vhphuc May 31, 2018):
-		throw new UnsupportedOperationException();
+	public String generateReport() {
+		if (!GOD_MODE) {
+			throw new IllegalAccessError("You ain't Yen!!!");
+		}
+		StringBuilder sb = new StringBuilder();
+		for (Entry<String, List<Order>> ordersByUser : database.entrySet()) {
+			int total = 0;
+			sb.append(ordersByUser.getKey());
+			for (Order order : ordersByUser.getValue()) {
+				sb.append(String.format("%n\t Order %d:  %s %d", order.getId(), order.getDish().getName(), order.getDish().getPrice()));
+				total += order.getDish().getPrice();
+			}
+			sb.append("\nTotal: ").append(total);
+			sb.append("\n----------------------------\n");
+		}
+		return sb.toString();
 	}
 	
 	/**
@@ -50,8 +90,10 @@ public class LunchOrderProcessor {
 	 * @return a collection of {@link Dish}
 	 */
 	public Collection<Dish> viewMenu() {
-		// TODO (vhphuc May 31, 2018):
-		throw new UnsupportedOperationException();
+		System.out.println(">>> MENU for today <<<");
+		String menu = StringUtils.join(MENU, "\n");
+		System.out.println(menu);
+		return MENU;
 	}
 	
 	/**
@@ -59,10 +101,9 @@ public class LunchOrderProcessor {
 	 * @return <code>true</code> if your payment is successful
 	 */
 	public boolean pay() {
-		// TODO (vhphuc May 31, 2018):
 		/*
 		 * Algorithm:
-		 *  - views the total amount he needs to pay (use random util)
+		 *  - views the total amount he needs to pay
 		 *  - pick kind of payment, for now, support only these two methods
 		 *    - cash
 		 *    - credit card
@@ -70,6 +111,76 @@ public class LunchOrderProcessor {
 		 *  - ask user to confirm
 		 *  - always return true for cash, for credit card, based on the validation (use random for boolean too)
 		 */
-		throw new UnsupportedOperationException();
+		if (CURRENT_USER == null) {
+			System.err.println("Must log in first by -user option first");
+			return false;
+		}
+		List<Order> myOrders = database.get(CURRENT_USER);
+		StringBuilder sb = new StringBuilder();
+		sb.append("My lunch orders:");
+		for (Order order : myOrders) {
+			sb.append("\n\t#").append(order.getId()).append(": ");
+			sb.append(order.getDish().getName());
+			sb.append(" - ").append(order.getDish().getPrice());
+		}
+		sb.append("\n----------------");
+		int myTotalCost = myOrders.stream().mapToInt(o -> o.getDish().getPrice()).sum();
+		sb.append("\nYour bill is ").append(myTotalCost).append("k VND\n");
+		System.out.println(sb.toString());
+
+		boolean isPaySuccessfully = false;
+		int attempts = 0;
+		while (!isPaySuccessfully && attempts < MAX_PAY_ATTEMPTS) {
+			System.out.println("You have two payment method: \t 1. Card \t 2. Cash \nWhich one you choose? \n");
+			int paymentMethod = reader.nextInt();
+			boolean isCardValidationPassed = false;
+			boolean isAddressValidationPassed = false;
+
+			switch (paymentMethod) {
+			case 1:
+				PaymentByCard paymentByCard = new PaymentByCard();
+				isCardValidationPassed = paymentByCard.validateCardInfo();
+				isAddressValidationPassed = paymentByCard.validateAddress();
+				isPaySuccessfully = paymentByCard.processPayment(isCardValidationPassed, isAddressValidationPassed);
+				if (isPaySuccessfully) {
+					database.remove(CURRENT_USER);
+					System.out.println("SUCCESS");
+					return true;
+				}
+				else {
+					System.out.println("DO NOT SUCCESS");
+					attempts++;
+				}
+				break;
+			case 2:
+				PaymentByCash paymentByCash = new PaymentByCash();
+				isCardValidationPassed = paymentByCash.validateCardInfo();
+				isAddressValidationPassed = paymentByCash.validateAddress();
+				isPaySuccessfully = paymentByCash.processPayment(isCardValidationPassed, isAddressValidationPassed);
+				if (isPaySuccessfully) {
+					database.remove(CURRENT_USER);
+					System.out.println("SUCCESS");
+					return true;
+				}
+				else {
+					System.out.println("DO NOT SUCCESS");
+					attempts++;
+				}
+				break;
+			default:
+				System.out.println("Sorry, no payment method available for this option!");
+				break;
+			}
+
+			if (attempts == 3) {
+				System.out.println("YOU TRY TOO MANY TIME");
+			}
+		}
+		return false;
+	}
+	
+	public void tearDown() {
+		// it's a hack
+		reader.close();
 	}
 }

@@ -2,15 +2,18 @@
 package hoang_yen_cuisine.basic;
 
 public class Order {
+	
+	private static int counter = 0;
+	
 	private int id;
 
 	private String username;
 
 	private Dish dish;
 
-	public Order(int id, String username, Dish dish) {
+	public Order(String username, Dish dish) {
 		super();
-		this.id = id;
+		this.id = ++counter;
 		this.username = username;
 		this.dish = dish;
 	}

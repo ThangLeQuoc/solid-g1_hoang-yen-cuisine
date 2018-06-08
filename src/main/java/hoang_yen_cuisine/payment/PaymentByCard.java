@@ -10,7 +10,7 @@ public class PaymentByCard implements IPayProcessor{
 	public boolean validateCardInfo() {
 		String cardNumber = "";
 		while ((cardNumber.length() < 7)) {
-			System.out.println("Enter Your Card Number Again (must >7 digits):");
+			System.out.println("Enter your card number again (must >7 digits):");
 			cardNumber = reader.nextLine();
 		}
 		Random random = new Random();
@@ -22,7 +22,7 @@ public class PaymentByCard implements IPayProcessor{
 		String address = "";
 		int trytime = 0;
 		while ((address.length() <= 0)&&(trytime < 3)) {
-			System.out.println("Please Enter Your Address:");
+			System.out.println("Please enter your address:");
 			address = reader.nextLine();
 			trytime++;
 		}
@@ -34,18 +34,18 @@ public class PaymentByCard implements IPayProcessor{
 	}
 
 	@Override
-	public boolean paySuccess(boolean card, boolean address) {
+	public boolean processPayment(boolean card, boolean address) {
 		if (card && address) {
 			return true;
 		}
 		else if (card && !address) {
-			System.out.println("Wrong Address");	
+			System.out.println("Invalid address");	
 		}
 		else if (!card && address) {
-			System.out.println("Wrong Card Info");	
+			System.out.println("Invalid card info");	
 		}
 		else {
-			System.out.println("Wrong Card Info Or Address");
+			System.out.println("Invalid card info/address");
 		}
 		return false;
 	}
