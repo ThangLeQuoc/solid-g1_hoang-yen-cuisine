@@ -3,6 +3,8 @@ package hoang_yen_cuisine.main;
 
 import static hoang_yen_cuisine.basic.MotherOfRepositories.CURRENT_USER;
 import static hoang_yen_cuisine.basic.MotherOfRepositories.GOD_MODE;
+import static hoang_yen_cuisine.basic.MotherOfRepositories.MENU;
+import static hoang_yen_cuisine.basic.MotherOfRepositories.OTHER_USERS;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 import java.io.BufferedReader;
@@ -69,7 +71,7 @@ public class App {
 		Option user = OptionBuilder.withDescription("Sets username").hasArg().withArgName("username").create("user");
 		Option order = OptionBuilder.withDescription("Orders a lunch").hasArg().withArgName("ID of dish").create("order");
 		Option pay = OptionBuilder.withDescription("Pays your order within this week").create("pay");
-		Option addDish = OptionBuilder.withDescription("Add new dish for today. Usage: \n\n -addDish [{\"id\":1,\"name\":\"ca\",\"price\":25},{\"id\":1,\"name\":\"dau-hu\",\"price\":25}]").create("addDish");
+		Option addDish = OptionBuilder.withDescription("Add new dish for today. Usage: \n\n -addDish [{\"name\":\"ca\",\"price\":25},{\"name\":\"dau-hu\",\"price\":25}]").create("addDish");
 		Option menu = OptionBuilder.withDescription("View menu").create("menu");
 		Option report = OptionBuilder.withDescription("Generate reports").create("report");
 		Option godmode = OptionBuilder.withDescription("God mode").create("poweroverwhelming");
@@ -110,6 +112,7 @@ public class App {
 
 		if (cl.hasOption("user")) {
 			CURRENT_USER = cl.getOptionValue("user");
+			GOD_MODE = false;
 			System.out.println("Welcome " + CURRENT_USER + "!");
 		}
 
@@ -130,13 +133,13 @@ public class App {
 
 				Dish[] dishes = gson.fromJson(args[0], Dish[].class);
 
-				MotherOfRepositories.MENU.addAll(Arrays.asList(dishes));
+				MENU.addAll(Arrays.asList(dishes));
 			}
 			catch (Exception e) {
 				System.err.println(">> Wrong format. Ex: -addDish [{\"name\":\"fried-fish\",\"price\":25},{\"name\":\"tofu\",\"price\":25}]");
 				return true;
 			}
-			notificationProcessor.sendNotification(MotherOfRepositories.OTHER_USERS);
+			notificationProcessor.sendNotification(OTHER_USERS);
 		}
 
 		if (cl.hasOption("menu")) {

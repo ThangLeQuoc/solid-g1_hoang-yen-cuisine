@@ -9,6 +9,10 @@ public class Dish implements Comparable<Dish> {
 	private String name;
 
 	private int price;
+	
+	public Dish() {
+		this.id = ++counter;
+	}
 
 	public Dish(String name, int price) {
 		super();

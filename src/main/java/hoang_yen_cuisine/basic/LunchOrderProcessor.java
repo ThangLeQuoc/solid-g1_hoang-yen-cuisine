@@ -30,8 +30,6 @@ public class LunchOrderProcessor {
 	
 	private LunchOrderProcessor() {}
 
-	// dirty cheap counter ;)
-	private int orderCounter = 0;
 	private Scanner reader = new Scanner(System.in);
 	
 	private Map<String, List<Order>> database = new HashMap<>();
@@ -45,7 +43,7 @@ public class LunchOrderProcessor {
 	public Order makeLunchOrder(int dishId) {
 		final Dish dish = findDish(dishId);
 		List<Order> orders = database.computeIfAbsent(CURRENT_USER, k -> new ArrayList<>());
-		Order newOrder = new Order(++orderCounter, CURRENT_USER, dish);
+		Order newOrder = new Order(CURRENT_USER, dish);
 		orders.add(newOrder);
 		System.out.println("You have made an order: " + newOrder);
 		return newOrder;
@@ -119,12 +117,13 @@ public class LunchOrderProcessor {
 		}
 		List<Order> myOrders = database.get(CURRENT_USER);
 		StringBuilder sb = new StringBuilder();
-		sb.append("My lunch orders:\n");
+		sb.append("My lunch orders:");
 		for (Order order : myOrders) {
 			sb.append("\n\t#").append(order.getId()).append(": ");
 			sb.append(order.getDish().getName());
 			sb.append(" - ").append(order.getDish().getPrice());
 		}
+		sb.append("\n----------------");
 		int myTotalCost = myOrders.stream().mapToInt(o -> o.getDish().getPrice()).sum();
 		sb.append("\nYour bill is ").append(myTotalCost).append("k VND\n");
 		System.out.println(sb.toString());

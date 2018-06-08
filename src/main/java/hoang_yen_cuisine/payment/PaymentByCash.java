@@ -8,7 +8,7 @@ public class PaymentByCash implements IPayProcessor{
 	Scanner reader = new Scanner(System.in);
 	@Override
 	public boolean validateCardInfo() {
-		System.out.println("Need not to enter card number");
+		System.out.println("No need to validate card info");
 		return true;
 	}
 
