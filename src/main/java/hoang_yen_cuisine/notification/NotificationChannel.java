@@ -10,11 +10,11 @@ public abstract class NotificationChannel {
         if (CollectionUtils.isEmpty(users)) {
             return;
         }
-        printNotificationTypes();
+        printNotificationType();
         printReminder(users);
     }
     
-    protected abstract void printNotificationTypes();
+    protected abstract void printNotificationType();
     
     private void printReminder(Set<String> users) {
         users.forEach(u -> {
