@@ -6,6 +6,9 @@ public class NotificationFactory {
     }
 
     public static final NotificationChannel buildNotificationChannel(NotificationType type) {
+        if (type == null) {
+            throw new IllegalArgumentException("Notification type unsupported");
+        }
         switch (type) {
         case EMAIL:
             return new EmailChannel();
