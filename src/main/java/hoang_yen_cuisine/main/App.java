@@ -25,7 +25,9 @@ import com.google.gson.Gson;
 import hoang_yen_cuisine.basic.Dish;
 import hoang_yen_cuisine.basic.LunchOrderProcessor;
 import hoang_yen_cuisine.basic.MotherOfRepositories;
+import hoang_yen_cuisine.notification.NotificationFactory;
 import hoang_yen_cuisine.notification.NotificationProcessor;
+import hoang_yen_cuisine.notification.NotificationType;
 
 @SuppressWarnings("deprecation")
 public class App {
@@ -41,6 +43,7 @@ public class App {
 	public static void main(String[] args) {
 		System.out.println(">>>   Welcome to Hoang Yen Cuisine   <<<");
 		printUsage();
+		initNotificationChannels();
 		
 		boolean keepRunning = true;
 			
@@ -175,6 +178,12 @@ public class App {
 		}
 
 		return keepRunning;
+	}
+	
+	private static void initNotificationChannels() {
+	    notificationProcessor.registerNotificationChannel(NotificationFactory.buildNotificationChannel(NotificationType.EMAIL));
+	    notificationProcessor.registerNotificationChannel(NotificationFactory.buildNotificationChannel(NotificationType.SMS));
+	    notificationProcessor.registerNotificationChannel(NotificationFactory.buildNotificationChannel(NotificationType.PUSH_NOTIFICATION));
 	}
 
 }
