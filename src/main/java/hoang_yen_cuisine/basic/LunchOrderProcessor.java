@@ -15,6 +15,7 @@ import java.util.Scanner;
 
 import org.apache.commons.lang3.StringUtils;
 
+import hoang_yen_cuisine.payment.IPayProcessor;
 import hoang_yen_cuisine.payment.PaymentByCard;
 import hoang_yen_cuisine.payment.PaymentByCash;
 
@@ -133,15 +134,11 @@ public class LunchOrderProcessor {
 		while (!isPaySuccessfully && attempts < MAX_PAY_ATTEMPTS) {
 			System.out.println("You have two payment method: \t 1. Card \t 2. Cash \nWhich one you choose? \n");
 			int paymentMethod = reader.nextInt();
-			boolean isCardValidationPassed = false;
-			boolean isAddressValidationPassed = false;
 
 			switch (paymentMethod) {
 			case 1:
-				PaymentByCard paymentByCard = new PaymentByCard();
-				isCardValidationPassed = paymentByCard.validateCardInfo();
-				isAddressValidationPassed = paymentByCard.validateAddress();
-				isPaySuccessfully = paymentByCard.processPayment(isCardValidationPassed, isAddressValidationPassed);
+				IPayProcessor paymentByCard = new PaymentByCard();
+				isPaySuccessfully = paymentByCard.processPayment();
 				if (isPaySuccessfully) {
 					database.remove(CURRENT_USER);
 					System.out.println("SUCCESS");
@@ -153,10 +150,8 @@ public class LunchOrderProcessor {
 				}
 				break;
 			case 2:
-				PaymentByCash paymentByCash = new PaymentByCash();
-				isCardValidationPassed = paymentByCash.validateCardInfo();
-				isAddressValidationPassed = paymentByCash.validateAddress();
-				isPaySuccessfully = paymentByCash.processPayment(isCardValidationPassed, isAddressValidationPassed);
+			    IPayProcessor paymentByCash = new PaymentByCash();
+				isPaySuccessfully = paymentByCash.processPayment();
 				if (isPaySuccessfully) {
 					database.remove(CURRENT_USER);
 					System.out.println("SUCCESS");
